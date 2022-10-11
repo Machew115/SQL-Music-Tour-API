@@ -2,7 +2,7 @@
 const events = require('express').Router()
 const { Events } = require('pg')
 const db = require('../models')
-const {Event} = db
+const {Event, Band, Stageevents, Stage} = db
 
 // FIND ALL EVENTS
 events.get('/', async (req, res) => {
@@ -24,6 +24,52 @@ events.post('/', async (req, res) => {
         })
     } catch(err) {
         res.status(500).json(err)
+    }
+})
+
+// FIND A SPECIFIC BAND
+events.get('/:name', async (req, res) => {
+    try {
+        const foundEvents = await Event.findOne({
+            where: { name: req.params.name  },
+            include: [ 
+        { 
+            model: MeetGreet, 
+            as: "meet_greets",
+            include: { 
+                model: Band, 
+                as: "Band",
+                where: { name: { [Op.like]: `%${req.query.event ? req.query.event : ''}%` } }
+            } 
+        },
+        { 
+            model: SetTime,
+            as: "set_times",
+            include: { 
+                model: Band, 
+                as: "Band",
+                where: { name: { [Op.like]: `%${req.query.event ? req.query.event : ''}%` } }
+            },
+            include: {
+                model: Stage,
+                as: "stage",
+                where: { name: { [Op.like]: `%${req.query.event ? req.query.event : ''}%` } }
+            }
+        },
+        { 
+            model: Stage,
+            as: "stages",
+            include: { 
+                model: Stageevents, 
+                as: "StageEvent",
+                where: { name: { [Op.like]: `%${req.query.event ? req.query.event : ''}%` } }
+            }
+        }
+    ]
+        })
+        res.status(200).json(foundBand)
+    } catch (error) {
+        res.status(500).json(error)
     }
 })
 

@@ -1,12 +1,35 @@
 //Dependencies
 const stages = require('express').Router()
 const db = require('../models')
-const {Stage} = db
+const {Stage, Events, StageEvent} = db
 // FIND ALL STAGES
 stages.get('/', async (req, res) => {
     try {
         const foundStages = await Stage.findAll()
         res.status(200).json(foundStages)
+    } catch (error) {
+        res.status(500).json(error)
+    }
+})
+
+// FIND A SPECIFIC BAND
+stages.get('/:name', async (req, res) => {
+    try {
+        const foundStages = await Stage.findOne({
+            where: { name: req.params.name  },
+            include: [ 
+        { 
+            model: Events, 
+            as: "Events",
+            include: { 
+                model: StageEvent, 
+                as: "StageEvent",
+                where: { name: { [Op.like]: `%${req.query.event ? req.query.event : ''}%` } }
+            } 
+        },
+    ]
+        })
+        res.status(200).json(foundBand)
     } catch (error) {
         res.status(500).json(error)
     }
